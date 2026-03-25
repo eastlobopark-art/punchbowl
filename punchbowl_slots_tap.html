@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Punchbowl</title>
+<style>
+  :root{
+    --bg:#0f172a;
+    --panel:#111827;
+    --panel2:#1f2937;
+    --text:#f8fafc;
+    --muted:#94a3b8;
+    --accent:#f59e0b;
+    --accent2:#fb7185;
+    --good:#22c55e;
+    --line:#334155;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:linear-gradient(180deg,#0b1220,#111827 45%,#0b1220);
+    color:var(--text);
+  }
+  .wrap{
+    max-width:980px;
+    margin:0 auto;
+    padding:24px 16px 40px;
+  }
+  h1{
+    margin:0 0 6px;
+    font-size:2rem;
+    letter-spacing:.5px;
+  }
+  .sub{
+    color:var(--muted);
+    margin-bottom:18px;
+  }
+  .grid{
+    display:grid;
+    grid-template-columns:1.1fr .9fr;
+    gap:18px;
+  }
+  @media (max-width: 860px){
+    .grid{grid-template-columns:1fr}
+  }
+  .card{
+    background:rgba(17,24,39,.92);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:16px;
+    box-shadow:0 10px 30px rgba(0,0,0,.22);
+  }
+  .slots{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+  @media (max-width: 620px){
+    .slots{grid-template-columns:1fr}
+  }
+  .slot{
+    display:grid;
+    grid-template-columns:44px 1fr 74px;
+    gap:8px;
+    align-items:center;
+    padding:8px;
+    border:1px solid var(--line);
+    border-radius:14px;
+    background:rgba(31,41,55,.65);
+    transition:.18s ease;
+  }
+  .slot.locked{
+    border-color:#166534;
+    background:rgba(20,83,45,.18);
+  }
+  .num{
+    width:44px;height:44px;
+    display:grid;place-items:center;
+    border-radius:999px;
+    background:#0b1220;
+    border:1px solid var(--line);
+    color:#cbd5e1;
+    font-weight:700;
+  }
+  .slot input{
+    width:100%;
+    min-width:0;
+    height:44px;
+    border-radius:12px;
+    border:1px solid #475569;
+    background:#0b1220;
+    color:var(--text);
+    padding:0 12px;
+    font-size:15px;
+    outline:none;
+  }
+  .slot input:focus{
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px rgba(245,158,11,.18);
+  }
+  button{
+    border:none;
+    border-radius:12px;
+    padding:11px 12px;
+    color:#08111f;
+    background:var(--accent);
+    font-weight:800;
+    cursor:pointer;
+  }
+  .lockBtn{
+    width:74px;
+    font-size:12px;
+    padding:10px 8px;
+  }
+  .slot.locked .lockBtn{
+    background:var(--good);
+    color:white;
+  }
+  .tools{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-top:14px;
+  }
+  .tools button.secondary{
+    background:#334155;
+    color:white;
+  }
+  .tools button.pink{
+    background:var(--accent2);
+    color:white;
+  }
+  .bowlArea{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    align-items:center;
+  }
+  .count{
+    color:var(--muted);
+    font-size:14px;
+    text-align:center;
+  }
+  .bowl{
+    position:relative;
+    width:min(360px,92vw);
+    height:250px;
+    border:none;
+    background:transparent;
+    cursor:pointer;
+    padding:0;
+  }
+  .bowl:active{transform:scale(.99)}
+  .bowlTop{
+    position:absolute;
+    left:50%;
+    top:25px;
+    transform:translateX(-50%);
+    width:230px;
+    height:65px;
+    border-radius:999px;
+    background:linear-gradient(180deg,#fbbf24,#f59e0b);
+    box-shadow:0 8px 20px rgba(0,0,0,.25);
+    z-index:4;
+  }
+  .bowlBody{
+    position:absolute;
+    left:50%;
+    bottom:6px;
+    transform:translateX(-50%);
+    width:300px;
+    height:190px;
+    border-radius:0 0 150px 150px / 0 0 130px 130px;
+    background:linear-gradient(180deg,#f59e0b,#d97706);
+    border:6px solid #fbbf24;
+    overflow:hidden;
+    box-shadow:0 16px 30px rgba(0,0,0,.35);
+  }
+  .bowlInner{
+    position:absolute;
+    inset:14px 16px 16px;
+    border-radius:0 0 128px 128px / 0 0 108px 108px;
+    background:rgba(255,255,255,.1);
+    overflow:hidden;
+  }
+  .paper{
+    position:absolute;
+    width:72px;
+    height:34px;
+    background:white;
+    color:#0f172a;
+    border-radius:8px;
+    display:grid;
+    place-items:center;
+    font-size:11px;
+    font-weight:700;
+    padding:0 6px;
+    text-align:center;
+    box-shadow:0 4px 10px rgba(0,0,0,.15);
+    user-select:none;
+  }
+  .shake .bowlTop,.shake .bowlBody{
+    animation:shake .55s ease;
+  }
+  @keyframes shake{
+    0%{transform:translateX(-50%) rotate(0)}
+    15%{transform:translateX(calc(-50% - 8px)) rotate(-4deg)}
+    30%{transform:translateX(calc(-50% + 8px)) rotate(4deg)}
+    45%{transform:translateX(calc(-50% - 6px)) rotate(-3deg)}
+    60%{transform:translateX(calc(-50% + 6px)) rotate(3deg)}
+    100%{transform:translateX(-50%) rotate(0)}
+  }
+  .result{
+    width:100%;
+    min-height:110px;
+    border:1px dashed #64748b;
+    border-radius:18px;
+    background:rgba(15,23,42,.55);
+    padding:14px;
+    display:grid;
+    place-items:center;
+    text-align:center;
+  }
+  .result .label{
+    color:var(--muted);
+    font-size:13px;
+    margin-bottom:6px;
+  }
+  .result .pick{
+    font-size:1.7rem;
+    font-weight:900;
+    line-height:1.15;
+    word-break:break-word;
+  }
+  .hint{
+    color:var(--muted);
+    font-size:13px;
+    text-align:center;
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Punchbowl</h1>
+    <div class="sub">Type into the 20 slots. Tap <b>Drop In</b> on each one. Then tap the bowl to pull a random pick.</div>
+
+    <div class="grid">
+      <section class="card">
+        <div class="slots" id="slots"></div>
+        <div class="tools">
+          <button class="secondary" id="lockAll">Drop In All Filled</button>
+          <button class="secondary" id="unlockAll">Unlock All</button>
+          <button class="pink" id="clearAll">Clear All</button>
+          <button id="resetDraws">Reset Draws</button>
+        </div>
+      </section>
+
+      <section class="card bowlArea">
+        <div class="count" id="countText">0 slips in the bowl</div>
+        <button class="bowl" id="bowl" aria-label="Tap bowl to draw">
+          <div class="bowlTop"></div>
+          <div class="bowlBody">
+            <div class="bowlInner" id="bowlInner"></div>
+          </div>
+        </button>
+
+        <div class="result" id="resultBox">
+          <div>
+            <div class="label">Random pick</div>
+            <div class="pick" id="pickText">Tap the bowl</div>
+          </div>
+        </div>
+        <div class="hint">Each locked slip can only be picked once until you hit <b>Reset Draws</b>.</div>
+      </section>
+    </div>
+  </div>
+
+<script>
+const MAX = 20;
+const state = Array.from({length: MAX}, (_, i) => ({
+  id: i + 1,
+  text: "",
+  locked: false,
+  drawn: false
+}));
+
+const slotsEl = document.getElementById('slots');
+const bowlInner = document.getElementById('bowlInner');
+const countText = document.getElementById('countText');
+const pickText = document.getElementById('pickText');
+const bowl = document.getElementById('bowl');
+
+function escapeHtml(str){
+  return str.replace(/[&<>"']/g, m => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[m]));
+}
+
+function renderSlots(){
+  slotsEl.innerHTML = state.map(item => `
+    <div class="slot ${item.locked ? 'locked' : ''}">
+      <div class="num">${item.id}</div>
+      <input 
+        type="text" 
+        maxlength="60" 
+        placeholder="Type idea ${item.id}" 
+        value="${escapeHtml(item.text)}"
+        data-id="${item.id}"
+        ${item.locked ? 'disabled' : ''}
+      />
+      <button class="lockBtn" data-lock="${item.id}">
+        ${item.locked ? 'Locked' : 'Drop In'}
+      </button>
+    </div>
+  `).join('');
+
+  slotsEl.querySelectorAll('input').forEach(input => {
+    input.addEventListener('input', e => {
+      const id = Number(e.target.dataset.id);
+      const item = state.find(x => x.id === id);
+      item.text = e.target.value;
+    });
+  });
+
+  slotsEl.querySelectorAll('[data-lock]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = Number(btn.dataset.lock);
+      const item = state.find(x => x.id === id);
+
+      if(item.locked){
+        item.locked = false;
+      } else {
+        if(!item.text.trim()){
+          alert('Type something in that slot first.');
+          return;
+        }
+        item.text = item.text.trim();
+        item.locked = true;
+      }
+      render();
+    });
+  });
+}
+
+function renderBowl(){
+  const papers = state.filter(x => x.locked);
+  countText.textContent = `${papers.length} slip${papers.length === 1 ? '' : 's'} in the bowl`;
+
+  bowlInner.innerHTML = papers.map((item, index) => {
+    const left = 8 + (index % 3) * 84 + Math.floor(Math.random() * 12);
+    const top = 12 + Math.floor(index / 3) * 38 + Math.floor(Math.random() * 10);
+    const shown = item.text.length > 11 ? item.text.slice(0, 10) + '…' : item.text;
+    const opacity = item.drawn ? 0.25 : 1;
+    return `<div class="paper" style="left:${left}px;top:${top}px;opacity:${opacity}">${escapeHtml(shown)}</div>`;
+  }).join('');
+}
+
+function render(){
+  renderSlots();
+  renderBowl();
+}
+
+function drawRandom(){
+  const available = state.filter(x => x.locked && !x.drawn && x.text.trim());
+  if(!available.length){
+    pickText.textContent = 'Nothing left to pick';
+    return;
+  }
+
+  bowl.classList.remove('shake');
+  void bowl.offsetWidth;
+  bowl.classList.add('shake');
+
+  const chosen = available[Math.floor(Math.random() * available.length)];
+  setTimeout(() => {
+    chosen.drawn = true;
+    pickText.textContent = chosen.text;
+    renderBowl();
+  }, 450);
+}
+
+document.getElementById('lockAll').addEventListener('click', () => {
+  state.forEach(item => {
+    if(item.text.trim()) {
+      item.text = item.text.trim();
+      item.locked = true;
+    }
+  });
+  render();
+});
+
+document.getElementById('unlockAll').addEventListener('click', () => {
+  state.forEach(item => item.locked = false);
+  render();
+});
+
+document.getElementById('clearAll').addEventListener('click', () => {
+  state.forEach(item => {
+    item.text = "";
+    item.locked = false;
+    item.drawn = false;
+  });
+  pickText.textContent = 'Tap the bowl';
+  render();
+});
+
+document.getElementById('resetDraws').addEventListener('click', () => {
+  state.forEach(item => item.drawn = false);
+  pickText.textContent = 'Tap the bowl';
+  renderBowl();
+});
+
+bowl.addEventListener('click', drawRandom);
+
+render();
+</script>
+</body>
+</html>
